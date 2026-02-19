@@ -208,3 +208,16 @@ ready-redis/
 docker-compose -f docker-compose.yml up -d
 ```
 Point a reverse proxy (nginx/Caddy) to ports 3000 and 8000.
+
+
+cd ready-redis
+# 1. Copy env file
+cp env.example .env
+# 2. Start all 7 services
+docker-compose up --build -d
+# 3. Check everything is running
+docker-compose ps
+Service	URL
+React UI	http://localhost:3000
+API + Swagger	http://localhost:8000/api/docs
+Flower (Celery)	http://localhost:5555
