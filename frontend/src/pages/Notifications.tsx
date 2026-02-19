@@ -15,7 +15,18 @@ function ToastList({ toasts }: { toasts: Toast[] }) {
     return (
         <div className="toast-wrap">
             {toasts.map((t) => (
-                <div key={t.id} className={`toast toast-${t.type}`}>{t.msg}</div>
+                <div key={t.id} className={`toast toast-${t.type}`}>
+                    {t.type === 'success' ? (
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M2.5 8l4 4 7-7" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                    ) : (
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M4 4l8 8M12 4l-8 8" strokeLinecap="round" />
+                        </svg>
+                    )}
+                    {t.msg}
+                </div>
             ))}
         </div>
     );
@@ -86,12 +97,16 @@ export default function Notifications() {
     return (
         <div>
             <div className="page-header">
-                <div>
+                <div className="page-heading">
+                    <span className="page-eyebrow">Records</span>
                     <h1 className="page-title">Notifications</h1>
                     <p className="page-subtitle">{total} total · auto-refreshes every 10s</p>
                 </div>
                 <button className="btn btn-primary" onClick={() => navigate('/create')}>
-                    ✉️ Send Notification
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M8 2v12M2 8h12" strokeLinecap="round" />
+                    </svg>
+                    Send Notification
                 </button>
             </div>
 
@@ -99,7 +114,7 @@ export default function Notifications() {
                 <input
                     className="search-input"
                     type="search"
-                    placeholder="🔍 Search title, recipient, message…"
+                    placeholder="Search title, recipient, message…"
                     value={search}
                     onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
                 />
@@ -108,7 +123,7 @@ export default function Notifications() {
                     value={statusFilter}
                     onChange={(e: ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value)}
                 >
-                    <option value="">All Statuses</option>
+                    <option value="">All statuses</option>
                     {['pending', 'queued', 'processing', 'sent', 'failed', 'scheduled', 'cancelled'].map((s) => (
                         <option key={s} value={s}>{s}</option>
                     ))}
@@ -118,21 +133,32 @@ export default function Notifications() {
                     value={channelFilter}
                     onChange={(e: ChangeEvent<HTMLSelectElement>) => setChannelFilter(e.target.value)}
                 >
-                    <option value="">All Channels</option>
-                    <option value="email">📧 Email</option>
-                    <option value="sms">📱 SMS</option>
-                    <option value="push">🔔 Push</option>
+                    <option value="">All channels</option>
+                    <option value="email">email</option>
+                    <option value="sms">sms</option>
+                    <option value="push">push</option>
                 </select>
-                <button className="btn btn-ghost" onClick={fetchData}>🔃</button>
+                <button className="btn btn-ghost btn-icon" onClick={fetchData} title="Refresh">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5" strokeLinecap="round" />
+                        <path d="M8 1v4l2.5-2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                </button>
             </div>
 
             <div className="card">
                 <div className="table-wrap">
                     {loading ? (
-                        <div className="empty-state loading-pulse"><p>Loading…</p></div>
+                        <div>
+                            <div className="loading-bar" style={{ borderRadius: 0, marginBottom: 0 }} />
+                            <div className="empty-state"><p>Loading…</p></div>
+                        </div>
                     ) : items.length === 0 ? (
                         <div className="empty-state">
-                            <div className="empty-icon">📭</div>
+                            <svg className="empty-icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="1.2">
+                                <path d="M20 5A10 10 0 0 1 30 15v7l3 5H7l3-5v-7A10 10 0 0 1 20 5Z" />
+                                <path d="M16 32a4 4 0 0 0 8 0" />
+                            </svg>
                             <p>No notifications found.</p>
                         </div>
                     ) : (
@@ -145,27 +171,38 @@ export default function Notifications() {
                                     <th>Status</th>
                                     <th>Priority</th>
                                     <th>Created</th>
-                                    <th>Actions</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {items.map((n) => (
                                     <tr key={n.id} onClick={() => setSelectedId(n.id)}>
-                                        <td style={{ maxWidth: 200 }}>
-                                            <div style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.title}</div>
+                                        <td style={{ maxWidth: 220 }}>
+                                            <div style={{
+                                                fontWeight: 600,
+                                                fontSize: '0.825rem',
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                            }}>{n.title}</div>
                                         </td>
                                         <td><ChannelBadge channel={n.channel} /></td>
-                                        <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{n.recipient}</td>
+                                        <td className="td-mono">{n.recipient}</td>
                                         <td><StatusBadge status={n.status} /></td>
-                                        <td style={{ textTransform: 'capitalize', color: 'var(--text-muted)', fontSize: '0.82rem' }}>{n.priority}</td>
-                                        <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>{fmt(n.created_at)}</td>
+                                        <td className="td-mono" style={{ textTransform: 'capitalize' }}>{n.priority}</td>
+                                        <td className="td-mono">{fmt(n.created_at)}</td>
                                         <td onClick={(e) => e.stopPropagation()}>
                                             {(n.status === 'failed' || n.status === 'cancelled') && (
                                                 <button
                                                     className="btn btn-success btn-sm"
                                                     onClick={(e) => handleQuickRetry(e, n.id)}
+                                                    title="Retry"
                                                 >
-                                                    🔃
+                                                    <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5" strokeLinecap="round" />
+                                                        <path d="M8 1v4l2.5-2" strokeLinecap="round" strokeLinejoin="round" />
+                                                    </svg>
+                                                    Retry
                                                 </button>
                                             )}
                                         </td>
