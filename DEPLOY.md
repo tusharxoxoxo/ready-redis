@@ -16,9 +16,9 @@ Stack: **Railway** (Backend + DB) · **Vercel** (Frontend) · **Upstash** (Redis
 
 1. Go to [console.upstash.com](https://console.upstash.com) → **Create Database**
 2. Choose **Redis** → region closest to you → **Free tier**
-3. Copy the **`UPSTASH_REDIS_REST_URL`** or the raw **`redis://...`** connection string
+3. Copy the **`rediss://...`** TLS connection string (not the REST URL)
 
-> **Note:** Use the **`rediss://` (TLS)** URL for production.  
+> **Note:** Use the **`rediss://` (TLS)** URL for production — note the double `s`.  
 > The env var in your app is `REDIS_URL`.
 
 ---
@@ -34,26 +34,32 @@ Stack: **Railway** (Backend + DB) · **Vercel** (Frontend) · **Upstash** (Redis
 
 1. Inside the project, click **+ New** → **Database** → **PostgreSQL**
 2. Once provisioned, click the Postgres service → **Variables** tab
-3. Copy the **`DATABASE_URL`** variable (you'll reference it in the next step)
+3. Note the **`DATABASE_URL`** variable — you'll reference it below
 
 ### 2c. Configure the Backend service
 
-Railway will auto-detect the `Dockerfile` at the repo root. Since your Dockerfile is inside `backend/`, set:
+Since your `Dockerfile` is inside `backend/`, configure the service:
 
 | Setting | Value |
 |---|---|
 | **Root Directory** | `backend` |
 | **Dockerfile Path** | `Dockerfile` |
-| **Start Command** | *(leave empty — uses `CMD` in Dockerfile)* |
+| **Start Command** | *(leave empty — CMD in Dockerfile runs uvicorn)* |
 
 **Environment Variables** (Settings → Variables):
 
 | Key | Value |
 |---|---|
-| `DATABASE_URL` | Reference the Postgres service variable: `${{Postgres.DATABASE_URL}}` |
+| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
 | `REDIS_URL` | Your Upstash `rediss://...` URL |
-| `SECRET_KEY` | Generate a secure random string: `openssl rand -hex 32` |
+| `SECRET_KEY` | Run `openssl rand -hex 32` to generate |
 | `APP_ENV` | `production` |
+| `CORS_ALLOW_ORIGINS` | `https://your-app.vercel.app,http://localhost:5173` |
+| `SEED_DEFAULT_ADMIN` | `false` (or `true` on first deploy only) |
+| `DEFAULT_ADMIN_USERNAME` | Your desired admin username |
+| `DEFAULT_ADMIN_PASSWORD` | A strong password (not `admin123`) |
+
+> ⚠️ You must set `CORS_ALLOW_ORIGINS` to your **actual Vercel URL** to avoid CORS errors.
 
 ### 2d. Configure the Celery Worker service
 
@@ -68,6 +74,7 @@ Railway will auto-detect the `Dockerfile` at the repo root. Since your Dockerfil
    - `REDIS_URL` → your Upstash URL
    - `SECRET_KEY` → same secret as backend
    - `APP_ENV` → `production`
+   - `CORS_ALLOW_ORIGINS` → same Vercel URL
 
 ### 2e. Run Database Migrations
 
@@ -84,6 +91,7 @@ uv run alembic upgrade head
 1. Go to [vercel.com](https://vercel.com) → **Add New Project** → import `ready-redis`
 2. Set **Root Directory** to `frontend`
 3. Vercel will auto-detect Vite. Build settings:
+
    | Setting | Value |
    |---|---|
    | **Framework Preset** | Vite |
@@ -91,28 +99,45 @@ uv run alembic upgrade head
    | **Output Directory** | `dist` |
 
 4. Add **Environment Variable**:
+
    | Key | Value |
    |---|---|
-   | `VITE_API_URL` | Your Railway backend URL (e.g. `https://ready-redis-backend.up.railway.app`) |
+   | `VITE_API_URL` | Your Railway backend URL, e.g. `https://ready-redis-backend.up.railway.app` |
 
 5. Click **Deploy**
+
+> **SPA Routing**: A `vercel.json` is already included in `frontend/` that rewrites all
+> routes to `index.html` so React Router works correctly on page refresh.
 
 ---
 
 ## 4. CORS Configuration
 
-In `backend/app/main.py`, ensure the Railway backend allows requests from your Vercel domain:
+The backend reads `CORS_ALLOW_ORIGINS` from the environment as a comma-separated list.
 
-```python
-origins = [
-    "https://your-app.vercel.app",
-    "http://localhost:5173",  # local dev
-]
+**In Railway**, set:
 ```
+CORS_ALLOW_ORIGINS=https://your-app.vercel.app,http://localhost:5173
+```
+
+Replace `your-app.vercel.app` with your actual Vercel deployment URL.
+
+The backend strips whitespace and splits on commas automatically, so you can add multiple origins.
 
 ---
 
-## 5. Summary
+## 5. Verifying the deployment
+
+After both services are deployed:
+
+1. Visit your Vercel URL — you should see the login page
+2. Log in with your admin credentials
+3. Check the browser **Network** tab — requests should go to the Railway URL
+4. If you see CORS errors, double-check the `CORS_ALLOW_ORIGINS` Railway env var matches your Vercel URL exactly (including `https://`, no trailing slash)
+
+---
+
+## 6. Summary
 
 | Service | Platform | Cost |
 |---|---|---|
