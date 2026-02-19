@@ -16,7 +16,6 @@ const PageLoader = () => (
         <div className="loading-bar" />
     </div>
 );
-import './index.css';
 
 interface ProtectedRouteProps {
     children: ReactNode;
