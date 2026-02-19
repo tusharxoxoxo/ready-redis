@@ -33,10 +33,10 @@ export default function Login() {
                         <div className="login-logo-mark">
                             <div className="login-logo-box">
                                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                    <rect x="3" y="3" width="6" height="6" fill="#0b0d11" />
-                                    <rect x="11" y="3" width="6" height="6" fill="#0b0d11" />
-                                    <rect x="3" y="11" width="6" height="6" fill="#0b0d11" />
-                                    <rect x="11" y="11" width="6" height="6" fill="#0b0d11" opacity="0.5" />
+                                    <rect x="3" y="3" width="6" height="6" fill="#ffffff" />
+                                    <rect x="11" y="3" width="6" height="6" fill="#ffffff" />
+                                    <rect x="3" y="11" width="6" height="6" fill="#ffffff" />
+                                    <rect x="11" y="11" width="6" height="6" fill="#ffffff" opacity="0.6" />
                                 </svg>
                             </div>
                             <span className="login-brand">NotifyHub</span>

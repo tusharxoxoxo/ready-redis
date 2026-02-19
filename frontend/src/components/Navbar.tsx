@@ -17,10 +17,10 @@ export default function Navbar() {
             <div className="sidebar-brand">
                 <div className="brand-icon">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <rect x="2" y="2" width="5" height="5" fill="#0b0d11" />
-                        <rect x="9" y="2" width="5" height="5" fill="#0b0d11" />
-                        <rect x="2" y="9" width="5" height="5" fill="#0b0d11" />
-                        <rect x="9" y="9" width="5" height="5" fill="#0b0d11" opacity="0.5" />
+                        <rect x="2" y="2" width="5" height="5" fill="#ffffff" />
+                        <rect x="9" y="2" width="5" height="5" fill="#ffffff" />
+                        <rect x="2" y="9" width="5" height="5" fill="#ffffff" />
+                        <rect x="9" y="9" width="5" height="5" fill="#ffffff" opacity="0.6" />
                     </svg>
                 </div>
                 <div className="brand-text">

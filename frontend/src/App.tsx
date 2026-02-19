@@ -18,7 +18,9 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
     return (
         <div className="layout">
             <Navbar />
-            <main className="main-content">{children}</main>
+            <main className="main-content">
+                <div className="main-inner">{children}</div>
+            </main>
         </div>
     );
 }
