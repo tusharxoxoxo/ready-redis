@@ -12,9 +12,10 @@ import os
 import pytest
 
 # ── Override env BEFORE any app import ───────────────────────────────────────
-os.environ.setdefault("DATABASE_URL", "sqlite:///./test.db")
-os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
-os.environ.setdefault("SECRET_KEY", "test-secret-key-not-for-production")
+# FORCE env vars to ensuring app uses test config, even if .env is loaded
+os.environ["DATABASE_URL"] = "sqlite:///./test.db"
+os.environ["REDIS_URL"] = "redis://localhost:6379/0"
+os.environ["SECRET_KEY"] = "test-secret-key-not-for-production"
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -42,6 +43,7 @@ def override_get_db():
 def create_test_tables():
     """Create all tables at start of test session, drop at end."""
     from app.database import Base
+
     Base.metadata.create_all(bind=test_engine)
     yield
     Base.metadata.drop_all(bind=test_engine)
@@ -78,9 +80,20 @@ def client(db):
     mock_task_result = MagicMock()
     mock_task_result.id = "mock-celery-task-id-12345"
 
-    with patch("app.tasks.email_task.send_email_notification.apply_async", return_value=mock_task_result), \
-         patch("app.tasks.sms_task.send_sms_notification.apply_async", return_value=mock_task_result), \
-         patch("app.tasks.push_task.send_push_notification.apply_async", return_value=mock_task_result):
+    with (
+        patch(
+            "app.tasks.email_task.send_email_notification.apply_async",
+            return_value=mock_task_result,
+        ),
+        patch(
+            "app.tasks.sms_task.send_sms_notification.apply_async",
+            return_value=mock_task_result,
+        ),
+        patch(
+            "app.tasks.push_task.send_push_notification.apply_async",
+            return_value=mock_task_result,
+        ),
+    ):
         with TestClient(app) as c:
             yield c
 

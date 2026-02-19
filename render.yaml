@@ -1,0 +1,40 @@
+services:
+  # Web Service: FastAPI Backend
+  - type: web
+    name: ready-redis-backend
+    runtime: docker
+    rootDir: backend
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ready-redis-db
+          property: connectionString
+      - key: REDIS_URL
+        sync: false # User must provide this (e.g., from Upstash)
+      - key: SECRET_KEY
+        generateValue: true
+      - key: APP_ENV
+        value: production
+
+  # Worker Service: Celery Worker
+  - type: worker
+    name: ready-redis-worker
+    runtime: docker
+    rootDir: backend
+    dockerCommand: uv run celery -A app.celery_app worker --loglevel=info
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ready-redis-db
+          property: connectionString
+      - key: REDIS_URL
+        sync: false # User must provide this (e.g., from Upstash)
+      - key: APP_ENV
+        value: production
+
+databases:
+  - name: ready-redis-db
+    plan: free
+    databaseName: notifydb
+    user: notify
