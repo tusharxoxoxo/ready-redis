@@ -25,6 +25,11 @@ dependencies = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+filterwarnings = [
+    "ignore:datetime.datetime.utcnow:DeprecationWarning:jose.jwt",
+    "ignore:The 'app' shortcut is now deprecated:DeprecationWarning:httpx._client",
+    "ignore:'crypt' is deprecated:DeprecationWarning:passlib.utils",
+]
 
 [dependency-groups]
 dev = [

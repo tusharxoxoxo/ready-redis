@@ -1,11 +1,12 @@
 from datetime import datetime
 from typing import Optional, Dict, Any
 from uuid import UUID
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from app.models import ChannelEnum, StatusEnum, PriorityEnum
 
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
+
 
 class Token(BaseModel):
     access_token: str
@@ -17,6 +18,7 @@ class TokenData(BaseModel):
 
 
 # ── Notifications ─────────────────────────────────────────────────────────────
+
 
 class NotificationCreate(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
@@ -51,8 +53,7 @@ class NotificationResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
     @classmethod
     def from_orm_model(cls, obj):
@@ -80,6 +81,7 @@ class NotificationListResponse(BaseModel):
 
 
 # ── Stats ─────────────────────────────────────────────────────────────────────
+
 
 class ChannelStats(BaseModel):
     email: int = 0

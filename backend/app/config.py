@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 from pydantic import model_validator
 
@@ -26,9 +26,7 @@ class Settings(BaseSettings):
     twilio_from_number: str = ""
     fcm_server_key: str = ""
 
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property
     def is_production_like(self) -> bool:
@@ -36,13 +34,23 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins(self) -> list[str]:
-        return [origin.strip() for origin in self.cors_allow_origins.split(",") if origin.strip()]
+        return [
+            origin.strip()
+            for origin in self.cors_allow_origins.split(",")
+            if origin.strip()
+        ]
 
     @property
     def should_seed_default_admin(self) -> bool:
         if self.seed_default_admin is not None:
             return self.seed_default_admin
-        return self.app_env.lower() in {"development", "dev", "local", "test", "testing"}
+        return self.app_env.lower() in {
+            "development",
+            "dev",
+            "local",
+            "test",
+            "testing",
+        }
 
     @model_validator(mode="after")
     def validate_security_defaults(self):

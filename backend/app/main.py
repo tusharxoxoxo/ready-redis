@@ -1,4 +1,5 @@
 from datetime import timedelta
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
@@ -16,10 +17,30 @@ settings = get_settings()
 # Create tables (Alembic used in prod, this covers dev quick-start)
 Base.metadata.create_all(bind=engine)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup logic
+    if settings.should_seed_default_admin:
+        db = next(get_db())
+        try:
+            seed_admin_user(
+                db,
+                username=settings.default_admin_username,
+                password=settings.default_admin_password,
+                is_admin=True,
+            )
+        finally:
+            db.close()
+    yield
+    # Shutdown logic (if any)
+
+
 app = FastAPI(
     title="Notification Management System",
     description="Generic async notification service supporting Email, SMS and Push channels.",
     version="1.0.0",
+    lifespan=lifespan,
     docs_url="/api/docs",
     redoc_url="/api/redoc",
 )
@@ -34,21 +55,6 @@ app.add_middleware(
 
 app.include_router(notifications.router)
 app.include_router(stats.router)
-
-
-@app.on_event("startup")
-def startup_event():
-    if settings.should_seed_default_admin:
-        db = next(get_db())
-        try:
-            seed_admin_user(
-                db,
-                username=settings.default_admin_username,
-                password=settings.default_admin_password,
-                is_admin=True,
-            )
-        finally:
-            db.close()
 
 
 @app.post("/api/auth/token", response_model=Token, tags=["Auth"])
