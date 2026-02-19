@@ -45,7 +45,7 @@ export default function Notifications() {
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [channelFilter, setChannelFilter] = useState('');
-    const [selectedId, setSelectedId] = useState<number | null>(null);
+    const [selectedId, setSelectedId] = useState<string | null>(null);
     const [toasts, setToasts] = useState<Toast[]>([]);
     const navigate = useNavigate();
 
@@ -82,7 +82,7 @@ export default function Notifications() {
         fetchData();
     };
 
-    const handleQuickRetry = async (e: React.MouseEvent, id: number) => {
+    const handleQuickRetry = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
         try {
             await retryNotification(id);

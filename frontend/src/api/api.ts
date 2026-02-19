@@ -41,7 +41,7 @@ export const login = (username: string, password: string) => {
 
 // ── Notifications ─────────────────────────────────────────────────────────────
 export interface NotificationItem {
-    id: number;
+    id: string;
     title: string;
     message: string;
     channel: string;
@@ -81,13 +81,13 @@ export interface GetNotificationsParams {
 
 export const getNotifications = (params?: GetNotificationsParams) =>
     api.get<NotificationsResponse>('/api/notifications', { params });
-export const getNotification = (id: number) =>
+export const getNotification = (id: string) =>
     api.get<NotificationItem>(`/api/notifications/${id}`);
 export const createNotification = (data: Partial<NotificationItem>) =>
     api.post<NotificationItem>('/api/notifications', data);
-export const retryNotification = (id: number) =>
+export const retryNotification = (id: string) =>
     api.post(`/api/notifications/${id}/retry`);
-export const deleteNotification = (id: number) =>
+export const deleteNotification = (id: string) =>
     api.delete(`/api/notifications/${id}`);
 
 // ── Stats ─────────────────────────────────────────────────────────────────────

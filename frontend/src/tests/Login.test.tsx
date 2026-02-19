@@ -103,7 +103,7 @@ describe('Login Page', () => {
         await user.click(screen.getByRole('button', { name: /sign in/i }));
 
         await waitFor(() => {
-            expect(screen.getByRole('button', { name: /signing in/i })).toBeDisabled();
+            expect(screen.getByRole('button', { name: /authenticating/i })).toBeDisabled();
         });
     });
 });

@@ -49,7 +49,13 @@ docker-compose ps
 | FastAPI + Swagger | http://localhost:8000/api/docs |
 | Flower (Celery) | http://localhost:5555 |
 
-**Default login:** `admin` / `admin123`
+**Default login (development only):** `admin` / `admin123`
+
+For production/staging, set:
+- `APP_ENV=production` (or `staging`)
+- a strong `SECRET_KEY` (minimum 32 chars, non-default)
+- `CORS_ALLOW_ORIGINS` to your trusted frontend origins
+- keep `SEED_DEFAULT_ADMIN=false` unless you intentionally bootstrap a non-default admin account
 
 ---
 

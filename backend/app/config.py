@@ -1,13 +1,20 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+from pydantic import model_validator
 
 
 class Settings(BaseSettings):
+    app_env: str = "development"
     database_url: str = "postgresql://notify:secret@postgres:5432/notifydb"
     redis_url: str = "redis://redis:6379/0"
     secret_key: str = "supersecretkey-change-in-production"
     access_token_expire_minutes: int = 60
     algorithm: str = "HS256"
+    cors_allow_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+
+    seed_default_admin: bool | None = None
+    default_admin_username: str = "admin"
+    default_admin_password: str = "admin123"
 
     # Provider credentials (optional – blank = mock mode)
     smtp_host: str = ""
@@ -22,6 +29,38 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         extra = "ignore"
+
+    @property
+    def is_production_like(self) -> bool:
+        return self.app_env.lower() in {"production", "staging"}
+
+    @property
+    def cors_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_allow_origins.split(",") if origin.strip()]
+
+    @property
+    def should_seed_default_admin(self) -> bool:
+        if self.seed_default_admin is not None:
+            return self.seed_default_admin
+        return self.app_env.lower() in {"development", "dev", "local", "test", "testing"}
+
+    @model_validator(mode="after")
+    def validate_security_defaults(self):
+        if self.is_production_like:
+            default_secret = "supersecretkey-change-in-production"
+            if self.secret_key == default_secret or len(self.secret_key) < 32:
+                raise ValueError(
+                    "SECRET_KEY must be set to a strong value (>=32 chars and not the default) in production/staging."
+                )
+            if self.should_seed_default_admin:
+                if (
+                    self.default_admin_username == "admin"
+                    and self.default_admin_password == "admin123"
+                ):
+                    raise ValueError(
+                        "Default admin credentials must be changed before enabling default admin seeding in production/staging."
+                    )
+        return self
 
 
 @lru_cache()

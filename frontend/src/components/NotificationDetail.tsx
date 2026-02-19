@@ -9,7 +9,7 @@ function fmt(dateStr: string | null | undefined): string {
 }
 
 interface NotificationDetailProps {
-    id: number;
+    id: string;
     onClose: () => void;
     onAction: (msg: string, type: 'success' | 'error') => void;
 }

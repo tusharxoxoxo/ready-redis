@@ -66,13 +66,13 @@ async def get_current_user(
     return user
 
 
-def seed_admin_user(db: Session):
+def seed_admin_user(db: Session, username: str, password: str, is_admin: bool = True):
     """Create default admin user if not present."""
-    if not get_user(db, "admin"):
+    if not get_user(db, username):
         admin = User(
-            username="admin",
-            hashed_password=hash_password("admin123"),
-            is_admin=True,
+            username=username,
+            hashed_password=hash_password(password),
+            is_admin=is_admin,
         )
         db.add(admin)
         db.commit()

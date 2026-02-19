@@ -26,10 +26,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 app.include_router(notifications.router)
@@ -38,11 +38,17 @@ app.include_router(stats.router)
 
 @app.on_event("startup")
 def startup_event():
-    db = next(get_db())
-    try:
-        seed_admin_user(db)
-    finally:
-        db.close()
+    if settings.should_seed_default_admin:
+        db = next(get_db())
+        try:
+            seed_admin_user(
+                db,
+                username=settings.default_admin_username,
+                password=settings.default_admin_password,
+                is_admin=True,
+            )
+        finally:
+            db.close()
 
 
 @app.post("/api/auth/token", response_model=Token, tags=["Auth"])
