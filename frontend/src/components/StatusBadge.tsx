@@ -1,46 +1,44 @@
 interface BadgeEntry {
     cls: string;
-    icon: string;
+    dot: string;
+    label: string;
 }
 
 const STATUS_MAP: Record<string, BadgeEntry> = {
-    sent: { cls: 'badge-sent', icon: '✅' },
-    pending: { cls: 'badge-pending', icon: '⏳' },
-    failed: { cls: 'badge-failed', icon: '❌' },
-    queued: { cls: 'badge-queued', icon: '🔄' },
-    processing: { cls: 'badge-processing', icon: '⚡' },
-    scheduled: { cls: 'badge-scheduled', icon: '📅' },
-    cancelled: { cls: 'badge-cancelled', icon: '🚫' },
+    sent: { cls: 'badge-sent', dot: 'sent', label: 'sent' },
+    pending: { cls: 'badge-pending', dot: 'pending', label: 'pending' },
+    failed: { cls: 'badge-failed', dot: 'failed', label: 'failed' },
+    queued: { cls: 'badge-queued', dot: 'queued', label: 'queued' },
+    processing: { cls: 'badge-processing', dot: 'processing', label: 'processing' },
+    scheduled: { cls: 'badge-scheduled', dot: 'scheduled', label: 'scheduled' },
+    cancelled: { cls: 'badge-cancelled', dot: 'cancelled', label: 'cancelled' },
 };
 
 const CHANNEL_MAP: Record<string, BadgeEntry> = {
-    email: { cls: 'badge-email', icon: '📧' },
-    sms: { cls: 'badge-sms', icon: '📱' },
-    push: { cls: 'badge-push', icon: '🔔' },
+    email: { cls: 'badge-email', dot: '', label: 'email' },
+    sms: { cls: 'badge-sms', dot: '', label: 'sms' },
+    push: { cls: 'badge-push', dot: '', label: 'push' },
 };
 
-interface StatusBadgeProps {
-    status: string;
-}
+interface StatusBadgeProps { status: string; }
 
 export function StatusBadge({ status }: StatusBadgeProps) {
-    const { cls, icon } = STATUS_MAP[status] ?? { cls: '', icon: '•' };
+    const entry = STATUS_MAP[status] ?? { cls: '', dot: '', label: status };
     return (
-        <span className={`badge ${cls}`}>
-            {icon} {status}
+        <span className={`badge ${entry.cls}`}>
+            <span className={`badge-dot ${entry.dot}`} />
+            {entry.label}
         </span>
     );
 }
 
-interface ChannelBadgeProps {
-    channel: string;
-}
+interface ChannelBadgeProps { channel: string; }
 
 export function ChannelBadge({ channel }: ChannelBadgeProps) {
-    const { cls, icon } = CHANNEL_MAP[channel] ?? { cls: '', icon: '•' };
+    const entry = CHANNEL_MAP[channel] ?? { cls: '', dot: '', label: channel };
     return (
-        <span className={`badge ${cls}`}>
-            {icon} {channel}
+        <span className={`badge ${entry.cls}`}>
+            {entry.label}
         </span>
     );
 }
