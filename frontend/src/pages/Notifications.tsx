@@ -1,10 +1,17 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, type ChangeEvent } from 'react';
 import { getNotifications, retryNotification } from '../api/api';
+import type { NotificationItem } from '../api/api';
 import { StatusBadge, ChannelBadge } from '../components/StatusBadge';
 import NotificationDetail from '../components/NotificationDetail';
 import { useNavigate } from 'react-router-dom';
 
-function Toast({ toasts }) {
+interface Toast {
+    id: number;
+    msg: string;
+    type: string;
+}
+
+function ToastList({ toasts }: { toasts: Toast[] }) {
     return (
         <div className="toast-wrap">
             {toasts.map((t) => (
@@ -14,24 +21,24 @@ function Toast({ toasts }) {
     );
 }
 
-function fmt(dateStr) {
+function fmt(dateStr: string | null | undefined): string {
     if (!dateStr) return '—';
     const d = new Date(dateStr);
     return d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
 }
 
 export default function Notifications() {
-    const [items, setItems] = useState([]);
+    const [items, setItems] = useState<NotificationItem[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [channelFilter, setChannelFilter] = useState('');
-    const [selectedId, setSelectedId] = useState(null);
-    const [toasts, setToasts] = useState([]);
+    const [selectedId, setSelectedId] = useState<number | null>(null);
+    const [toasts, setToasts] = useState<Toast[]>([]);
     const navigate = useNavigate();
 
-    const addToast = (msg, type = 'success') => {
+    const addToast = (msg: string, type = 'success') => {
         const id = Date.now();
         setToasts((p) => [...p, { id, msg, type }]);
         setTimeout(() => setToasts((p) => p.filter((t) => t.id !== id)), 3500);
@@ -39,7 +46,7 @@ export default function Notifications() {
 
     const fetchData = useCallback(async () => {
         try {
-            const params = { limit: 100 };
+            const params: Record<string, string | number> = { limit: 100 };
             if (search) params.search = search;
             if (statusFilter) params.status = statusFilter;
             if (channelFilter) params.channel = channelFilter;
@@ -59,19 +66,20 @@ export default function Notifications() {
         return () => clearInterval(id);
     }, [fetchData]);
 
-    const handleAction = (msg, type) => {
+    const handleAction = (msg: string, type: 'success' | 'error') => {
         addToast(msg, type);
         fetchData();
     };
 
-    const handleQuickRetry = async (e, id) => {
+    const handleQuickRetry = async (e: React.MouseEvent, id: number) => {
         e.stopPropagation();
         try {
             await retryNotification(id);
             addToast('Re-queued!', 'success');
             fetchData();
         } catch (err) {
-            addToast(err.response?.data?.detail || 'Retry failed', 'error');
+            const e = err as { response?: { data?: { detail?: string } } };
+            addToast(e.response?.data?.detail || 'Retry failed', 'error');
         }
     };
 
@@ -93,12 +101,12 @@ export default function Notifications() {
                     type="search"
                     placeholder="🔍 Search title, recipient, message…"
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
                 />
                 <select
                     className="filter-select"
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value)}
                 >
                     <option value="">All Statuses</option>
                     {['pending', 'queued', 'processing', 'sent', 'failed', 'scheduled', 'cancelled'].map((s) => (
@@ -108,7 +116,7 @@ export default function Notifications() {
                 <select
                     className="filter-select"
                     value={channelFilter}
-                    onChange={(e) => setChannelFilter(e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLSelectElement>) => setChannelFilter(e.target.value)}
                 >
                     <option value="">All Channels</option>
                     <option value="email">📧 Email</option>
@@ -169,7 +177,7 @@ export default function Notifications() {
                 </div>
             </div>
 
-            {selectedId && (
+            {selectedId !== null && (
                 <NotificationDetail
                     id={selectedId}
                     onClose={() => setSelectedId(null)}
@@ -177,7 +185,7 @@ export default function Notifications() {
                 />
             )}
 
-            <Toast toasts={toasts} />
+            <ToastList toasts={toasts} />
         </div>
     );
 }

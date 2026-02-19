@@ -10,7 +10,7 @@ export default function Login() {
     const { login } = useAuth();
     const navigate = useNavigate();
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError('');
         setLoading(true);
@@ -18,7 +18,8 @@ export default function Login() {
             await login(username, password);
             navigate('/');
         } catch (err) {
-            setError(err.response?.data?.detail || 'Login failed. Check your credentials.');
+            const e = err as { response?: { data?: { detail?: string } } };
+            setError(e.response?.data?.detail || 'Login failed. Check your credentials.');
         } finally {
             setLoading(false);
         }

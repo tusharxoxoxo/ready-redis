@@ -40,7 +40,6 @@ describe('StatusBadge', () => {
 
     it('renders unknown status without crashing', () => {
         render(<StatusBadge status="unknown" />);
-        // Should render, just with no special class
         const badge = document.querySelector('.badge');
         expect(badge).toBeInTheDocument();
     });

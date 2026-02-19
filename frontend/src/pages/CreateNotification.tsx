@@ -1,8 +1,14 @@
-import { useState } from 'react';
+import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createNotification } from '../api/api';
 
-function Toast({ toasts }) {
+interface Toast {
+    id: number;
+    msg: string;
+    type: string;
+}
+
+function ToastList({ toasts }: { toasts: Toast[] }) {
     return (
         <div className="toast-wrap">
             {toasts.map((t) => (
@@ -12,7 +18,16 @@ function Toast({ toasts }) {
     );
 }
 
-const INITIAL = {
+interface FormState {
+    title: string;
+    message: string;
+    channel: string;
+    recipient: string;
+    priority: string;
+    scheduled_at: string;
+}
+
+const INITIAL: FormState = {
     title: '',
     message: '',
     channel: 'email',
@@ -22,37 +37,41 @@ const INITIAL = {
 };
 
 export default function CreateNotification() {
-    const [form, setForm] = useState(INITIAL);
+    const [form, setForm] = useState<FormState>(INITIAL);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [toasts, setToasts] = useState([]);
+    const [toasts, setToasts] = useState<Toast[]>([]);
     const navigate = useNavigate();
 
-    const addToast = (msg, type = 'success') => {
+    const addToast = (msg: string, type = 'success') => {
         const id = Date.now();
         setToasts((p) => [...p, { id, msg, type }]);
         setTimeout(() => setToasts((p) => p.filter((t) => t.id !== id)), 4000);
     };
 
-    const handleChange = (e) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError('');
         setLoading(true);
         try {
-            const payload = { ...form };
-            if (!payload.scheduled_at) delete payload.scheduled_at;
-            else payload.scheduled_at = new Date(payload.scheduled_at).toISOString();
+            const payload: Partial<FormState> = { ...form };
+            if (!payload.scheduled_at) {
+                delete payload.scheduled_at;
+            } else {
+                payload.scheduled_at = new Date(payload.scheduled_at).toISOString();
+            }
             await createNotification(payload);
             addToast('✅ Notification queued successfully!', 'success');
             setForm(INITIAL);
             setTimeout(() => navigate('/notifications'), 1500);
         } catch (err) {
-            const detail = err.response?.data?.detail;
+            const e = err as { response?: { data?: { detail?: string | Array<{ msg: string }> } } };
+            const detail = e.response?.data?.detail;
             setError(
                 Array.isArray(detail)
                     ? detail.map((d) => d.msg).join(', ')
@@ -171,7 +190,7 @@ export default function CreateNotification() {
                 </div>
             </div>
 
-            <Toast toasts={toasts} />
+            <ToastList toasts={toasts} />
         </div>
     );
 }

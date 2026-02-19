@@ -2,7 +2,7 @@
  * Tests for the Login page — form rendering and interaction.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -10,7 +10,7 @@ import { MemoryRouter } from 'react-router-dom';
 const mockLogin = vi.fn();
 vi.mock('../context/AuthContext', () => ({
     useAuth: () => ({ login: mockLogin, token: null, user: null }),
-    AuthProvider: ({ children }) => children,
+    AuthProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 // Mock react-router-dom navigate
@@ -44,7 +44,6 @@ describe('Login Page', () => {
 
     it('shows default credential hint', () => {
         renderLogin();
-        // Both placeholder and code element contain 'admin' — use getAllByText
         const adminEls = screen.getAllByText(/admin/);
         expect(adminEls.length).toBeGreaterThanOrEqual(2);
         expect(screen.getByText('admin123')).toBeInTheDocument();
@@ -95,7 +94,6 @@ describe('Login Page', () => {
     });
 
     it('disables submit button while logging in', async () => {
-        // Never resolves — stays in loading state
         mockLogin.mockImplementation(() => new Promise(() => { }));
         const user = userEvent.setup();
         renderLogin();

@@ -1,20 +1,27 @@
 import { useEffect, useState, useRef } from 'react';
 import { getNotification, retryNotification, deleteNotification } from '../api/api';
+import type { NotificationItem } from '../api/api';
 import { StatusBadge, ChannelBadge } from './StatusBadge';
 
-function fmt(dateStr) {
+function fmt(dateStr: string | null | undefined): string {
     if (!dateStr) return '—';
     return new Date(dateStr).toLocaleString();
 }
 
-export default function NotificationDetail({ id, onClose, onAction }) {
-    const [notif, setNotif] = useState(null);
+interface NotificationDetailProps {
+    id: number;
+    onClose: () => void;
+    onAction: (msg: string, type: 'success' | 'error') => void;
+}
+
+export default function NotificationDetail({ id, onClose, onAction }: NotificationDetailProps) {
+    const [notif, setNotif] = useState<NotificationItem | null>(null);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
-    const overlayRef = useRef(null);
+    const overlayRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const fetch = async () => {
+        const fetchDetail = async () => {
             try {
                 const res = await getNotification(id);
                 setNotif(res.data);
@@ -24,7 +31,7 @@ export default function NotificationDetail({ id, onClose, onAction }) {
                 setLoading(false);
             }
         };
-        fetch();
+        fetchDetail();
     }, [id]);
 
     const handleRetry = async () => {
@@ -34,7 +41,8 @@ export default function NotificationDetail({ id, onClose, onAction }) {
             onAction('Notification re-queued for delivery!', 'success');
             onClose();
         } catch (e) {
-            onAction(e.response?.data?.detail || 'Retry failed', 'error');
+            const err = e as { response?: { data?: { detail?: string } } };
+            onAction(err.response?.data?.detail || 'Retry failed', 'error');
         } finally {
             setActionLoading(false);
         }
@@ -47,14 +55,14 @@ export default function NotificationDetail({ id, onClose, onAction }) {
             await deleteNotification(id);
             onAction('Notification deleted.', 'success');
             onClose();
-        } catch (e) {
+        } catch {
             onAction('Delete failed', 'error');
         } finally {
             setActionLoading(false);
         }
     };
 
-    const handleOverlayClick = (e) => {
+    const handleOverlayClick = (e: { target: EventTarget | null }) => {
         if (e.target === overlayRef.current) onClose();
     };
 

@@ -1,7 +1,17 @@
 import { useEffect, useState, useCallback } from 'react';
 import { getStats } from '../api/api';
+import type { StatsResponse } from '../api/api';
 
-const STAT_CONFIG = [
+type NumericStatKey = 'total' | 'sent' | 'failed' | 'queued' | 'processing' | 'scheduled' | 'pending';
+
+interface StatConfig {
+    key: NumericStatKey;
+    label: string;
+    icon: string;
+    cls: string;
+}
+
+const STAT_CONFIG: StatConfig[] = [
     { key: 'total', label: 'Total', icon: '📊', cls: 'total' },
     { key: 'sent', label: 'Sent', icon: '✅', cls: 'sent' },
     { key: 'queued', label: 'Queued', icon: '🔄', cls: 'queued' },
@@ -11,7 +21,7 @@ const STAT_CONFIG = [
 ];
 
 export default function Dashboard() {
-    const [stats, setStats] = useState(null);
+    const [stats, setStats] = useState<StatsResponse | null>(null);
     const [loading, setLoading] = useState(true);
 
     const fetchStats = useCallback(async () => {
@@ -31,10 +41,10 @@ export default function Dashboard() {
         return () => clearInterval(interval);
     }, [fetchStats]);
 
-    const total = stats?.total || 0;
-    const channels = stats?.channels || {};
+    const total = stats?.total ?? 0;
+    const channels = stats?.channels ?? {};
 
-    const pct = (n) => total === 0 ? 0 : Math.round((n / total) * 100);
+    const pct = (n: number) => (total === 0 ? 0 : Math.round((n / total) * 100));
 
     return (
         <div>

@@ -43,24 +43,24 @@ describe('Dashboard Page', () => {
     });
 
     it('shows loading state initially', () => {
-        getStats.mockImplementation(() => new Promise(() => { }));
+        (getStats as ReturnType<typeof vi.fn>).mockImplementation(() => new Promise(() => { }));
         renderDashboard();
         expect(screen.getByText(/loading/i)).toBeInTheDocument();
     });
 
     it('renders stat cards with correct counts after load', async () => {
-        getStats.mockResolvedValue({ data: MOCK_STATS });
+        (getStats as ReturnType<typeof vi.fn>).mockResolvedValue({ data: MOCK_STATS });
         renderDashboard();
 
         await waitFor(() => {
-            expect(screen.getByText('42')).toBeInTheDocument(); // total
-            expect(screen.getByText('30')).toBeInTheDocument(); // sent
-            expect(screen.getByText('5')).toBeInTheDocument();  // failed
+            expect(screen.getByText('42')).toBeInTheDocument();
+            expect(screen.getByText('30')).toBeInTheDocument();
+            expect(screen.getByText('5')).toBeInTheDocument();
         });
     });
 
     it('renders page title', async () => {
-        getStats.mockResolvedValue({ data: MOCK_STATS });
+        (getStats as ReturnType<typeof vi.fn>).mockResolvedValue({ data: MOCK_STATS });
         renderDashboard();
         await waitFor(() => {
             expect(screen.getByText('Dashboard')).toBeInTheDocument();
@@ -68,7 +68,7 @@ describe('Dashboard Page', () => {
     });
 
     it('renders channel distribution section', async () => {
-        getStats.mockResolvedValue({ data: MOCK_STATS });
+        (getStats as ReturnType<typeof vi.fn>).mockResolvedValue({ data: MOCK_STATS });
         renderDashboard();
 
         await waitFor(() => {
@@ -80,7 +80,7 @@ describe('Dashboard Page', () => {
     });
 
     it('shows empty state link when no notifications', async () => {
-        getStats.mockResolvedValue({
+        (getStats as ReturnType<typeof vi.fn>).mockResolvedValue({
             data: {
                 total: 0, sent: 0, failed: 0, queued: 0,
                 processing: 0, scheduled: 0, pending: 0,
@@ -95,7 +95,7 @@ describe('Dashboard Page', () => {
     });
 
     it('shows refresh button', async () => {
-        getStats.mockResolvedValue({ data: MOCK_STATS });
+        (getStats as ReturnType<typeof vi.fn>).mockResolvedValue({ data: MOCK_STATS });
         renderDashboard();
 
         await waitFor(() => {
