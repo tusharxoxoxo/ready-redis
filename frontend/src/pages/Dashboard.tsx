@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
+import useSWR from 'swr';
 import { getStats } from '../api/api';
 import type { StatsResponse } from '../api/api';
 
@@ -69,27 +70,19 @@ const STAT_CONFIG: StatConfig[] = [
 ];
 
 export default function Dashboard() {
-    const [stats, setStats] = useState<StatsResponse | null>(null);
-    const [loading, setLoading] = useState(true);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-    const fetchStats = useCallback(async () => {
-        try {
-            const res = await getStats();
-            setStats(res.data);
-            setLastUpdated(new Date());
-        } catch (e) {
-            console.error('Failed to fetch stats', e);
-        } finally {
-            setLoading(false);
+    const { data: stats, isLoading, mutate } = useSWR<StatsResponse>(
+        '/stats',
+        async () => (await getStats()).data,
+        {
+            refreshInterval: 10000,
+            revalidateOnFocus: true,
+            onSuccess: () => setLastUpdated(new Date())
         }
-    }, []);
+    );
 
-    useEffect(() => {
-        fetchStats();
-        const interval = setInterval(fetchStats, 10000);
-        return () => clearInterval(interval);
-    }, [fetchStats]);
+    const loading = isLoading && !stats;
 
     const total = stats?.total ?? 0;
     const channels = stats?.channels ?? {};
@@ -112,7 +105,7 @@ export default function Dashboard() {
                         Auto-refreshes every 10s
                     </p>
                 </div>
-                <button className="btn btn-ghost" onClick={fetchStats} title="Refresh metrics">
+                <button className="btn btn-ghost" onClick={() => mutate()} title="Refresh metrics">
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
                         <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5" strokeLinecap="round" />
                         <path d="M8 1v4l2.5-2" strokeLinecap="round" strokeLinejoin="round" />

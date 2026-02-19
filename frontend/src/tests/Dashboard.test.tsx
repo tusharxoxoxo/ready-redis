@@ -30,11 +30,15 @@ const MOCK_STATS = {
     channels: { email: 20, sms: 15, push: 7 },
 };
 
+import { SWRConfig } from 'swr';
+
 const renderDashboard = () =>
     render(
-        <MemoryRouter>
-            <Dashboard />
-        </MemoryRouter>
+        <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+            <MemoryRouter>
+                <Dashboard />
+            </MemoryRouter>
+        </SWRConfig>
     );
 
 describe('Dashboard Page', () => {
