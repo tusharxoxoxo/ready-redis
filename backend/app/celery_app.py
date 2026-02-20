@@ -1,3 +1,4 @@
+import ssl
 from celery import Celery
 from app.config import get_settings
 
@@ -15,7 +16,9 @@ def make_celery() -> Celery:
             "app.tasks.push_task",
         ],
     )
-    celery.conf.update(
+
+    # Base config
+    conf: dict = dict(
         task_serializer="json",
         accept_content=["json"],
         result_serializer="json",
@@ -29,6 +32,14 @@ def make_celery() -> Celery:
             "app.tasks.push_task.*": {"queue": "push"},
         },
     )
+
+    # Upstash / any rediss:// broker requires explicit SSL options
+    if settings.redis_url.startswith("rediss://"):
+        ssl_opts = {"ssl_cert_reqs": ssl.CERT_NONE}
+        conf["broker_use_ssl"] = ssl_opts
+        conf["redis_backend_use_ssl"] = ssl_opts
+
+    celery.conf.update(conf)
     return celery
 
 
