@@ -3,7 +3,7 @@ import enum
 from datetime import datetime
 from sqlalchemy import (
     Column, String, Text, DateTime, Integer, Enum as SAEnum,
-    JSON, Boolean
+    JSON, Boolean, ForeignKey
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
@@ -24,6 +24,13 @@ class StatusEnum(str, enum.Enum):
     failed = "failed"
     scheduled = "scheduled"
     cancelled = "cancelled"
+
+
+class NotificationEventTypeEnum(str, enum.Enum):
+    created = "created"
+    status_changed = "status_changed"
+    retry_requested = "retry_requested"
+    delivery_attempt = "delivery_attempt"
 
 
 class PriorityEnum(str, enum.Enum):
@@ -57,6 +64,21 @@ class Notification(Base):
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class NotificationEvent(Base):
+    __tablename__ = "notification_events"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    notification_id = Column(
+        UUID(as_uuid=True), ForeignKey("notifications.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    event_type = Column(SAEnum(NotificationEventTypeEnum), nullable=False)
+    previous_status = Column(SAEnum(StatusEnum), nullable=True)
+    new_status = Column(SAEnum(StatusEnum), nullable=True)
+    message = Column(Text, nullable=True)
+    metadata_ = Column("metadata", JSON, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
 class User(Base):

@@ -42,3 +42,11 @@ class TestSecurityConfig:
             default_admin_password="UltraStrongAdminPassw0rd!",
         )
         assert settings.should_seed_default_admin is True
+
+    def test_rejects_blank_database_url(self):
+        with pytest.raises(ValueError, match="DATABASE_URL is empty"):
+            Settings(database_url="   ")
+
+    def test_rejects_invalid_database_url(self):
+        with pytest.raises(ValueError, match="DATABASE_URL is invalid"):
+            Settings(database_url="ghcr.io/railwayapp-templates/postgres-ssl:17")

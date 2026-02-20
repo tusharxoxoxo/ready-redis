@@ -1,6 +1,8 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 from pydantic import model_validator
+from sqlalchemy.engine import make_url
+from sqlalchemy.exc import ArgumentError
 
 
 class Settings(BaseSettings):
@@ -54,6 +56,22 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_security_defaults(self):
+        database_url = self.database_url.strip()
+        if not database_url:
+            raise ValueError(
+                "DATABASE_URL is empty. Set DATABASE_URL to your Postgres connection string "
+                "(on Railway, use a variable reference to your Postgres service DATABASE_URL, "
+                "not a Docker image name)."
+            )
+        try:
+            make_url(database_url)
+        except ArgumentError as exc:
+            raise ValueError(
+                "DATABASE_URL is invalid. Expected a SQLAlchemy database URL like "
+                "'postgresql://user:pass@host:5432/dbname'. On Railway, point DATABASE_URL "
+                "to your Postgres service DATABASE_URL variable."
+            ) from exc
+
         if self.is_production_like:
             default_secret = "supersecretkey-change-in-production"
             if self.secret_key == default_secret or len(self.secret_key) < 32:
