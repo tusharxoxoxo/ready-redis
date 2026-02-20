@@ -10,7 +10,7 @@ def _add_ssl_param(url: str) -> str:
     if "ssl_cert_reqs" in url:
         return url
     separator = "&" if "?" in url else "?"
-    return f"{url}{separator}ssl_cert_reqs=CERT_NONE"
+    return f"{url}{separator}ssl_cert_reqs=none"
 
 
 def make_celery() -> Celery:
