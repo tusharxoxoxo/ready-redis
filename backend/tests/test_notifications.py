@@ -105,6 +105,28 @@ class TestCreateNotification:
         res = client.post("/api/notifications", json=payload, headers=auth_headers)
         assert res.status_code == 422
 
+    def test_create_invalid_sms_recipient_returns_422(self, client, auth_headers):
+        payload = {
+            "title": "OTP",
+            "message": "1234",
+            "channel": "sms",
+            "recipient": "2025550100",
+        }
+        res = client.post("/api/notifications", json=payload, headers=auth_headers)
+        assert res.status_code == 422
+
+    def test_create_past_scheduled_at_returns_422(self, client, auth_headers):
+        past = (datetime.now(timezone.utc) - timedelta(minutes=1)).isoformat()
+        payload = {
+            "title": "Late reminder",
+            "message": "Already late",
+            "channel": "email",
+            "recipient": "test@example.com",
+            "scheduled_at": past,
+        }
+        res = client.post("/api/notifications", json=payload, headers=auth_headers)
+        assert res.status_code == 422
+
     def test_create_requires_auth(self, client):
         """Creating without auth token returns 401."""
         payload = {"title": "t", "message": "m", "channel": "email", "recipient": "x@x.com"}
@@ -151,6 +173,14 @@ class TestListNotifications:
         assert res.status_code == 200
         assert res.json()["total"] == 0
 
+    def test_list_invalid_status_returns_422(self, client, auth_headers):
+        res = client.get("/api/notifications?status=not-a-status", headers=auth_headers)
+        assert res.status_code == 422
+
+    def test_list_invalid_channel_returns_422(self, client, auth_headers):
+        res = client.get("/api/notifications?channel=telegram", headers=auth_headers)
+        assert res.status_code == 422
+
     def test_list_ordered_newest_first(self, client, auth_headers):
         """Notifications are ordered by created_at descending."""
         for i in range(3):
@@ -187,6 +217,12 @@ class TestGetNotification:
             headers=auth_headers,
         )
         assert res.status_code == 404
+
+    def test_get_events_returns_timeline(self, client, auth_headers, sample_notification):
+        nid = sample_notification["id"]
+        res = client.get(f"/api/notifications/{nid}/events", headers=auth_headers)
+        assert res.status_code == 200
+        assert len(res.json()["items"]) >= 1
 
 
 class TestDeleteNotification:

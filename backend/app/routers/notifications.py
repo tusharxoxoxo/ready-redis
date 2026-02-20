@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -6,11 +5,20 @@ from sqlalchemy.orm import Session
 
 from app.auth import get_current_user
 from app.database import get_db
-from app.models import Notification, StatusEnum, ChannelEnum
+from app.events import log_notification_event
+from app.models import (
+    Notification,
+    NotificationEvent,
+    NotificationEventTypeEnum,
+    StatusEnum,
+    ChannelEnum,
+)
 from app.schemas import (
     NotificationCreate,
     NotificationResponse,
     NotificationListResponse,
+    NotificationEventListResponse,
+    NotificationEventResponse,
 )
 from app.tasks.email_task import send_email_notification
 from app.tasks.sms_task import send_sms_notification
@@ -53,6 +61,13 @@ def create_notification(
     )
     db.add(notif)
     db.flush()  # get the ID
+    log_notification_event(
+        db,
+        notification_id=str(notif.id),
+        event_type=NotificationEventTypeEnum.created,
+        new_status=notif.status,
+        message="Notification created and queued for processing",
+    )
 
     task_id = _enqueue(notif)
     notif.celery_task_id = task_id
@@ -63,8 +78,8 @@ def create_notification(
 
 @router.get("", response_model=NotificationListResponse)
 def list_notifications(
-    status: Optional[str] = Query(None),
-    channel: Optional[str] = Query(None),
+    status: Optional[StatusEnum] = Query(None),
+    channel: Optional[ChannelEnum] = Query(None),
     search: Optional[str] = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
@@ -73,15 +88,9 @@ def list_notifications(
 ):
     q = db.query(Notification)
     if status:
-        try:
-            q = q.filter(Notification.status == StatusEnum(status))
-        except ValueError:
-            pass
+        q = q.filter(Notification.status == status)
     if channel:
-        try:
-            q = q.filter(Notification.channel == ChannelEnum(channel))
-        except ValueError:
-            pass
+        q = q.filter(Notification.channel == channel)
     if search:
         q = q.filter(
             Notification.title.ilike(f"%{search}%")
@@ -123,9 +132,18 @@ def retry_notification(
             detail=f"Can only retry failed or cancelled notifications (current: {notif.status.value})",
         )
 
+    previous_status = notif.status
     notif.status = StatusEnum.queued
     notif.error_message = None
     db.flush()
+    log_notification_event(
+        db,
+        notification_id=str(notif.id),
+        event_type=NotificationEventTypeEnum.retry_requested,
+        previous_status=previous_status,
+        new_status=StatusEnum.queued,
+        message="Manual retry requested",
+    )
     task_id = _enqueue(notif)
     notif.celery_task_id = task_id
     db.commit()
@@ -144,3 +162,24 @@ def delete_notification(
         raise HTTPException(status_code=404, detail="Notification not found")
     db.delete(notif)
     db.commit()
+
+
+@router.get("/{notification_id}/events", response_model=NotificationEventListResponse)
+def list_notification_events(
+    notification_id: UUID,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    notif = db.query(Notification).filter(Notification.id == notification_id).first()
+    if not notif:
+        raise HTTPException(status_code=404, detail="Notification not found")
+
+    items = (
+        db.query(NotificationEvent)
+        .filter(NotificationEvent.notification_id == notification_id)
+        .order_by(NotificationEvent.created_at.desc())
+        .all()
+    )
+    return NotificationEventListResponse(
+        items=[NotificationEventResponse.from_orm_model(i) for i in items]
+    )

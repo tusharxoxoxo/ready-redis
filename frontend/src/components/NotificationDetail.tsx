@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
-import { getNotification, retryNotification, deleteNotification } from '../api/api';
-import type { NotificationItem } from '../api/api';
+import { getNotification, getNotificationEvents, retryNotification, deleteNotification } from '../api/api';
+import type { NotificationItem, NotificationEventItem } from '../api/api';
 import { StatusBadge, ChannelBadge } from './StatusBadge';
 
 function fmt(dateStr: string | null | undefined): string {
@@ -16,6 +16,7 @@ interface NotificationDetailProps {
 
 export default function NotificationDetail({ id, onClose, onAction }: NotificationDetailProps) {
     const [notif, setNotif] = useState<NotificationItem | null>(null);
+    const [events, setEvents] = useState<NotificationEventItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
     const overlayRef = useRef<HTMLDivElement>(null);
@@ -23,8 +24,12 @@ export default function NotificationDetail({ id, onClose, onAction }: Notificati
     useEffect(() => {
         const fetchDetail = async () => {
             try {
-                const res = await getNotification(id);
-                setNotif(res.data);
+                const [notifRes, eventsRes] = await Promise.all([
+                    getNotification(id),
+                    getNotificationEvents(id),
+                ]);
+                setNotif(notifRes.data);
+                setEvents(eventsRes.data.items);
             } catch (e) {
                 console.error(e);
             } finally {
@@ -169,6 +174,28 @@ export default function NotificationDetail({ id, onClose, onAction }: Notificati
                                     <strong>Error:</strong> {notif.error_message}
                                 </div>
                             )}
+
+                            <div className="detail-item" style={{ marginTop: 12 }}>
+                                <div className="detail-label" style={{ marginBottom: 6 }}>Event Timeline</div>
+                                {events.length === 0 ? (
+                                    <div className="message-box">No events recorded.</div>
+                                ) : (
+                                    <div className="message-box">
+                                        {events.map((ev) => (
+                                            <div key={ev.id} style={{ marginBottom: 8 }}>
+                                                <div className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>
+                                                    {fmt(ev.created_at)}
+                                                </div>
+                                                <div>
+                                                    {ev.event_type}
+                                                    {ev.previous_status ? ` (${ev.previous_status} → ${ev.new_status})` : ''}
+                                                </div>
+                                                {ev.message && <div style={{ color: 'var(--red)' }}>{ev.message}</div>}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </>
                     ) : (
                         <div className="empty-state"><p>Notification not found.</p></div>

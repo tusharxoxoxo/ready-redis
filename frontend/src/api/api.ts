@@ -1,6 +1,6 @@
 import axios, { InternalAxiosRequestConfig } from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 const api = axios.create({
     baseURL: API_BASE,
@@ -56,6 +56,21 @@ export interface NotificationItem {
     error_message: string | null;
 }
 
+export interface NotificationEventItem {
+    id: string;
+    notification_id: string;
+    event_type: string;
+    previous_status: string | null;
+    new_status: string | null;
+    message: string | null;
+    metadata: Record<string, unknown> | null;
+    created_at: string;
+}
+
+export interface NotificationEventsResponse {
+    items: NotificationEventItem[];
+}
+
 export interface NotificationsResponse {
     items: NotificationItem[];
     total: number;
@@ -83,6 +98,8 @@ export const getNotifications = (params?: GetNotificationsParams) =>
     api.get<NotificationsResponse>('/api/notifications', { params });
 export const getNotification = (id: string) =>
     api.get<NotificationItem>(`/api/notifications/${id}`);
+export const getNotificationEvents = (id: string) =>
+    api.get<NotificationEventsResponse>(`/api/notifications/${id}/events`);
 export const createNotification = (data: Partial<NotificationItem>) =>
     api.post<NotificationItem>('/api/notifications', data);
 export const retryNotification = (id: string) =>

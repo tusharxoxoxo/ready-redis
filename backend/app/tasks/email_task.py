@@ -4,6 +4,7 @@ import time
 from celery import Task
 from app.celery_app import celery_app
 from app.config import get_settings
+from app.events import log_notification_event
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -22,7 +23,7 @@ class NotificationTask(Task):
         return self._db
 
     def update_status(self, notification_id: str, status: str, error: str = None, retry_count: int = None):
-        from app.models import Notification, StatusEnum
+        from app.models import Notification, NotificationEventTypeEnum, StatusEnum
         from sqlalchemy.orm import Session
         from app.database import SessionLocal
 
@@ -30,11 +31,21 @@ class NotificationTask(Task):
         try:
             notif = db.query(Notification).filter(Notification.id == notification_id).first()
             if notif:
+                previous_status = notif.status
                 notif.status = StatusEnum(status)
                 if error is not None:
                     notif.error_message = error
                 if retry_count is not None:
                     notif.retry_count = retry_count
+                log_notification_event(
+                    db,
+                    notification_id=notification_id,
+                    event_type=NotificationEventTypeEnum.status_changed,
+                    previous_status=previous_status,
+                    new_status=notif.status,
+                    message=error,
+                    metadata={"retry_count": notif.retry_count},
+                )
                 db.commit()
         finally:
             db.close()
