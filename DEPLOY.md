@@ -54,7 +54,7 @@ Since your `Dockerfile` is inside `backend/`, configure the service:
 | `REDIS_URL` | Your Upstash `rediss://...` URL |
 | `SECRET_KEY` | Run `openssl rand -hex 32` to generate |
 | `APP_ENV` | `production` |
-| `CORS_ALLOW_ORIGINS` | `https://your-app.vercel.app,http://localhost:5173` |
+| `CORS_ALLOW_ORIGINS` | `https://ready-redis.vercel.app,http://localhost:5173` |
 | `SEED_DEFAULT_ADMIN` | `false` (or `true` on first deploy only) |
 | `DEFAULT_ADMIN_USERNAME` | Your desired admin username |
 | `DEFAULT_ADMIN_PASSWORD` | A strong password (not `admin123`) |
@@ -117,7 +117,7 @@ The backend reads `CORS_ALLOW_ORIGINS` from the environment as a comma-separated
 
 **In Railway**, set:
 ```
-CORS_ALLOW_ORIGINS=https://your-app.vercel.app,http://localhost:5173
+CORS_ALLOW_ORIGINS=https://ready-redis.vercel.app,http://localhost:5173
 ```
 
 Replace `your-app.vercel.app` with your actual Vercel deployment URL.
