@@ -102,7 +102,7 @@ uv run alembic upgrade head
 
    | Key | Value |
    |---|---|
-   | `VITE_API_URL` | Your Railway backend URL, e.g. `https://ready-redis-backend.up.railway.app` |
+   | `VITE_API_URL` | Your Railway backend URL, e.g. `https://ready-redis-backend-production.up.railway.app` |
 
 5. Click **Deploy**
 
